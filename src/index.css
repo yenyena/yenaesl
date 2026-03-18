@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-primary: #2563EB;
+  --color-secondary: #F59E0B;
+  --color-text: #1E293B;
+  --color-text-light: #64748B;
+  --color-correct: #16A34A;
+  --color-incorrect: #DC2626;
+  --radius-card: 1rem;
+  --radius-button: 0.75rem;
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-hover: 0 8px 24px rgba(0,0,0,0.12);
+  --font-heading: "Fredoka One", cursive;
+  --font-body: "Nunito", sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  font-size: 20px;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Memory Match card flip */
+.memory-card {
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+}
+
+.memory-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.memory-card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.memory-card-front {
+  transform: rotateY(180deg);
+}
+
+/* What's Missing sparkle reveal */
+@keyframes sparkle-glow {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(255, 217, 61, 0.4); }
+  50% { box-shadow: 0 0 20px 6px rgba(255, 217, 61, 0.8); }
+}
+
+.sparkle-glow {
+  animation: sparkle-glow 1s ease-in-out infinite;
+}
+
+/* Slow Reveal golden pulse on correct guess */
+@keyframes golden-pulse {
+  0%, 100% { box-shadow: 0 0 12px 4px rgba(255, 217, 61, 0.3); }
+  50% { box-shadow: 0 0 28px 10px rgba(255, 217, 61, 0.7); }
+}
+
+.golden-pulse {
+  animation: golden-pulse 1.2s ease-in-out infinite;
+}
+
+/* Odd One Out golden glow on correct answer */
+@keyframes golden-glow-ooo {
+  0%, 100% { box-shadow: 0 0 12px 4px rgba(255, 217, 61, 0.4); }
+  50% { box-shadow: 0 0 28px 10px rgba(255, 217, 61, 0.8); }
+}
+
+.golden-glow-ooo {
+  animation: golden-glow-ooo 0.8s ease-in-out infinite;
+}
+
+/* Freeze & Find frost shimmer on frozen bubbles */
+@keyframes frost-shimmer {
+  0%, 100% { box-shadow: 0 0 8px 3px rgba(147, 197, 253, 0.4); }
+  50% { box-shadow: 0 0 20px 8px rgba(147, 197, 253, 0.8); }
+}
+
+.frost-border > div {
+  border-color: #93C5FD !important;
+  animation: frost-shimmer 1s ease-in-out infinite;
+}
+
+/* Freeze & Find screen flash */
+@keyframes freeze-flash {
+  0% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+/* Freeze & Find button pulse */
+@keyframes freeze-pulse {
+  0%, 100% { box-shadow: 0 0 12px 4px rgba(96, 165, 250, 0.3); }
+  50% { box-shadow: 0 0 28px 10px rgba(96, 165, 250, 0.6); }
+}
+
+/* Freeze & Find wrong-tap shake */
+@keyframes bubble-shake {
+  0%, 100% { translate: 0 0; }
+  20% { translate: -8px 0; }
+  40% { translate: 8px 0; }
+  60% { translate: -6px 0; }
+  80% { translate: 4px 0; }
+}
+
+/* Build the Monster victory dance */
+@keyframes monster-dance {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-5deg) translateY(-8px); }
+  75% { transform: rotate(5deg) translateY(-8px); }
+}
+
+/* Monster jiggle when part attaches */
+@keyframes monster-jiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-3deg); }
+  40% { transform: rotate(3deg); }
+  60% { transform: rotate(-2deg); }
+  80% { transform: rotate(1deg); }
+}
