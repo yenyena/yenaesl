@@ -21,8 +21,9 @@ import type { Unit, CategoryList, ExportData } from '../types';
 // ─── Image handling ───
 
 async function uploadImage(dataUrl: string, path: string): Promise<string> {
+  const contentType = dataUrl.match(/^data:([^;]+);/)?.[1] || 'image/png';
   const storageRef = ref(storage, path);
-  await uploadString(storageRef, dataUrl, 'data_url');
+  await uploadString(storageRef, dataUrl, 'data_url', { contentType });
   return getDownloadURL(storageRef);
 }
 
