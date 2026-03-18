@@ -10,6 +10,7 @@ import {
   pushAllToFirestore,
   clearFirestore,
   subscribeToFirestore,
+  fetchAllFromFirestore,
 } from '../services/syncService';
 
 interface VocabState {
@@ -98,46 +99,48 @@ export const useVocabStore = create<VocabState>((set, get) => ({
   isLoaded: false,
 
   loadAll: async () => {
-    // 1. Load from IndexedDB (fast local)
+    // 1. Load from IndexedDB (fast local cache)
     const [units, categoryLists] = await Promise.all([
       db.getAllUnits(),
       db.getAllCategoryLists(),
     ]);
     set({ units, categoryLists, isLoaded: true });
 
-    // 2. Set up Firestore real-time listeners
     const { setStatus, setLastSynced } = useSyncStore.getState();
     setStatus('syncing');
 
-    let isFirstSnapshot = true;
+    // 2. Explicit one-time fetch from Firestore
+    try {
+      const remote = await fetchAllFromFirestore();
 
-    subscribeToFirestore(async (remoteUnits, remoteCategoryLists) => {
-      if (isFirstSnapshot) {
-        isFirstSnapshot = false;
+      if (remote.units.length > 0 || remote.categoryLists.length > 0) {
+        // Firestore has data — update local
+        applyingRemote = true;
+        const importData: ExportData = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          units: remote.units,
+          categoryLists: remote.categoryLists,
+        };
+        await db.importAll(importData, 'replace');
+        set({ units: remote.units, categoryLists: remote.categoryLists });
+        applyingRemote = false;
+      } else if (units.length > 0 || categoryLists.length > 0) {
+        // Firestore is empty but local has data — push local to Firestore
+        const localData = await db.exportAll();
+        await pushAllToFirestore(localData);
+      }
 
-        if (remoteUnits.length > 0 || remoteCategoryLists.length > 0) {
-          // Firestore has data — update local
-          applyingRemote = true;
-          const importData: ExportData = {
-            version: 1,
-            exportedAt: new Date().toISOString(),
-            units: remoteUnits,
-            categoryLists: remoteCategoryLists,
-          };
-          await db.importAll(importData, 'replace');
-          set({ units: remoteUnits, categoryLists: remoteCategoryLists });
-          applyingRemote = false;
-        } else {
-          // Firestore is empty but local has data — push local to Firestore
-          const localUnits = get().units;
-          const localCategoryLists = get().categoryLists;
-          if (localUnits.length > 0 || localCategoryLists.length > 0) {
-            const localData = await db.exportAll();
-            await pushAllToFirestore(localData);
-          }
-        }
-      } else {
-        // Subsequent snapshots — remote changes, update local
+      setStatus('connected');
+      setLastSynced(new Date());
+    } catch (err) {
+      console.error('[vocabStore] Initial Firestore fetch failed:', err);
+      setStatus('error');
+    }
+
+    // 3. Set up real-time listeners for ongoing sync
+    subscribeToFirestore(
+      async (remoteUnits, remoteCategoryLists) => {
         applyingRemote = true;
         const importData: ExportData = {
           version: 1,
@@ -148,11 +151,15 @@ export const useVocabStore = create<VocabState>((set, get) => ({
         await db.importAll(importData, 'replace');
         set({ units: remoteUnits, categoryLists: remoteCategoryLists });
         applyingRemote = false;
-      }
 
-      setStatus('connected');
-      setLastSynced(new Date());
-    });
+        setStatus('connected');
+        setLastSynced(new Date());
+      },
+      (err) => {
+        console.error('[vocabStore] Firestore listener error:', err);
+        setStatus('error');
+      },
+    );
   },
 
   getUnitsByMonth: (month) => get().units.filter((u) => u.month === month),

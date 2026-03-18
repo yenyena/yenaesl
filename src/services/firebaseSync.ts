@@ -143,10 +143,24 @@ export async function clearFirestore(): Promise<void> {
   }
 }
 
+// ─── One-time fetch ───
+
+export async function fetchAllFromFirestore(): Promise<{ units: Unit[]; categoryLists: CategoryList[] }> {
+  const [unitSnap, catSnap] = await Promise.all([
+    getDocs(unitsCol()),
+    getDocs(categoryListsCol()),
+  ]);
+  return {
+    units: unitSnap.docs.map((d) => d.data() as Unit),
+    categoryLists: catSnap.docs.map((d) => d.data() as CategoryList),
+  };
+}
+
 // ─── Real-time listeners ───
 
 export function subscribeToFirestore(
   onUpdate: (units: Unit[], categoryLists: CategoryList[]) => void,
+  onError?: (error: Error) => void,
 ): Unsubscribe {
   let latestUnits: Unit[] = [];
   let latestCategoryLists: CategoryList[] = [];
@@ -159,20 +173,25 @@ export function subscribeToFirestore(
     }
   }
 
+  function handleError(err: Error) {
+    console.error('[firebaseSync] onSnapshot error:', err);
+    onError?.(err);
+  }
+
   const unsubUnits = onSnapshot(unitsCol(), (snapshot) => {
     // Skip snapshots from our own local writes
     if (snapshot.metadata.hasPendingWrites) return;
     latestUnits = snapshot.docs.map((d) => d.data() as Unit);
     unitsReady = true;
     emit();
-  });
+  }, handleError);
 
   const unsubCats = onSnapshot(categoryListsCol(), (snapshot) => {
     if (snapshot.metadata.hasPendingWrites) return;
     latestCategoryLists = snapshot.docs.map((d) => d.data() as CategoryList);
     categoryListsReady = true;
     emit();
-  });
+  }, handleError);
 
   return () => {
     unsubUnits();

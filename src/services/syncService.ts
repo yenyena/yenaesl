@@ -25,4 +25,5 @@ export {
   pushAllToFirestore,
   clearFirestore,
   subscribeToFirestore,
+  fetchAllFromFirestore,
 } from './firebaseSync';
