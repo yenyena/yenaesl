@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { SpeakerIcon, SpeakerMuteIcon, GearIcon } from './icons';
+import { SyncIndicator } from './SyncIndicator';
 
 export function TopBar() {
   const { isMuted, toggleMute } = useSettingsStore();
@@ -12,6 +13,7 @@ export function TopBar() {
       </Link>
 
       <div className="flex items-center gap-3">
+        <SyncIndicator />
         <button
           onClick={toggleMute}
           className="cursor-pointer bg-transparent border-none p-2 rounded-button hover:bg-bg transition-colors text-text-light"
