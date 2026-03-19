@@ -8,7 +8,7 @@ interface SettingsState {
   zoomOut: () => void;
 }
 
-const ZOOM_MIN = 0.6;
+const ZOOM_MIN = 0.3;
 const ZOOM_MAX = 1.4;
 const ZOOM_STEP = 0.1;
 

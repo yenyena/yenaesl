@@ -62,7 +62,7 @@ export function GameShell() {
         <div className="flex items-center gap-2">
           <button
             onClick={zoomOut}
-            disabled={zoomLevel <= 0.6}
+            disabled={zoomLevel <= 0.3}
             className="cursor-pointer bg-primary/10 text-primary border-none p-1.5 rounded-button hover:bg-primary/20 transition-colors disabled:opacity-30 disabled:cursor-default"
             title="Zoom out"
           >
