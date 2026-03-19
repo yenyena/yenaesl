@@ -61,4 +61,10 @@ export const GAMES: GameDef[] = [
     subtitle: 'Say the word, add a body part!',
     minWords: 5,
   },
+  {
+    id: 'treasure-trail',
+    name: 'Treasure Trail',
+    subtitle: 'Race to the treasure chest!',
+    minWords: 5,
+  },
 ];

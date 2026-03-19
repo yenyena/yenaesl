@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useRef, useCallback } from 'react';
+import { useReducer, useEffect, useRef, useCallback, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { useVocabStore } from '../../stores/useVocabStore';
@@ -7,7 +7,8 @@ import { CardGrid } from './CardGrid';
 import { CountdownOverlay } from './CountdownOverlay';
 import { VictoryOverlay } from './VictoryOverlay';
 import { useGameSounds } from './useGameSounds';
-import type { MemoryCard } from './types';
+import type { MemoryCard, Difficulty } from './types';
+import { PAIRS_BY_DIFFICULTY } from './types';
 import type { Word } from '../../types';
 
 function shuffleArray<T>(arr: T[]): T[] {
@@ -19,8 +20,8 @@ function shuffleArray<T>(arr: T[]): T[] {
   return shuffled;
 }
 
-function buildCards(words: Word[]): MemoryCard[] {
-  const selected = shuffleArray(words).slice(0, 4);
+function buildCards(words: Word[], pairCount: number): MemoryCard[] {
+  const selected = shuffleArray(words).slice(0, pairCount);
   const cards: MemoryCard[] = [];
 
   for (const word of selected) {
@@ -52,26 +53,29 @@ export function MemoryMatch() {
   const unit = uid ? getUnit(uid) : undefined;
 
   const [state, dispatch] = useReducer(memoryMatchReducer, initialState);
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
   const { play } = useGameSounds();
 
   const evaluatingRef = useRef(false);
   const noMatchIndicesRef = useRef<number[]>([]);
   const [, forceRender] = useReducer((x: number) => x + 1, 0);
 
+  const pairCount = PAIRS_BY_DIFFICULTY[difficulty];
+
   const startGame = useCallback(
-    (words: Word[]) => {
-      const cards = buildCards(words);
-      dispatch({ type: 'START_MEMORIZE', cards });
+    (words: Word[], pairs: number) => {
+      const cards = buildCards(words, pairs);
+      dispatch({ type: 'START_MEMORIZE', cards, totalPairs: pairs });
     },
     [],
   );
 
-  // Start game on mount / when unit loads
+  // Start game on mount / when unit loads / when difficulty changes
   useEffect(() => {
-    if (unit && unit.words.length >= 4) {
-      startGame(unit.words);
+    if (unit && unit.words.length >= pairCount) {
+      startGame(unit.words, pairCount);
     }
-  }, [unit, startGame]);
+  }, [unit, startGame, pairCount]);
 
   // Memorize phase countdown
   useEffect(() => {
@@ -136,7 +140,7 @@ export function MemoryMatch() {
 
   // Victory check
   useEffect(() => {
-    if (state.phase !== 'playing' || state.matchedPairs < 4) return;
+    if (state.phase !== 'playing' || state.matchedPairs < state.totalPairs) return;
 
     const timeout = setTimeout(() => {
       dispatch({ type: 'VICTORY' });
@@ -144,7 +148,7 @@ export function MemoryMatch() {
     }, 800);
 
     return () => clearTimeout(timeout);
-  }, [state.matchedPairs, state.phase, play]);
+  }, [state.matchedPairs, state.totalPairs, state.phase, play]);
 
   const handleCardClick = useCallback(
     (index: number) => {
@@ -157,13 +161,22 @@ export function MemoryMatch() {
 
   const handlePlayAgain = useCallback(() => {
     if (unit) {
-      startGame(unit.words);
+      startGame(unit.words, pairCount);
     }
-  }, [unit, startGame]);
+  }, [unit, startGame, pairCount]);
 
   const handleBackToGames = useCallback(() => {
     navigate('/');
   }, [navigate]);
+
+  const handleDifficultyChange = useCallback(
+    (d: Difficulty) => {
+      if (d === difficulty) return;
+      if (!unit || unit.words.length < PAIRS_BY_DIFFICULTY[d]) return;
+      setDifficulty(d);
+    },
+    [difficulty, unit],
+  );
 
   // Not enough words guard
   if (!unit || unit.words.length < 4) {
@@ -190,8 +203,34 @@ export function MemoryMatch() {
     );
   }
 
+  const canPlayHard = unit.words.length >= PAIRS_BY_DIFFICULTY.hard;
+
   return (
     <div className="relative h-full flex flex-col items-center justify-center">
+      <div className="flex items-center gap-2 mb-2">
+        {(['normal', 'hard'] as const).map((d) => {
+          const isActive = difficulty === d;
+          const disabled = d === 'hard' && !canPlayHard;
+          return (
+            <button
+              key={d}
+              onClick={() => handleDifficultyChange(d)}
+              disabled={disabled}
+              className={`px-4 py-1.5 rounded-full font-heading text-sm transition-colors ${
+                isActive
+                  ? 'bg-primary text-white shadow-card'
+                  : disabled
+                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                    : 'bg-surface text-text-light hover:bg-gray-100'
+              }`}
+              title={disabled ? 'Need at least 5 words for Hard mode' : undefined}
+            >
+              {d === 'normal' ? 'Normal (8)' : 'Hard (10)'}
+            </button>
+          );
+        })}
+      </div>
+
       <CountdownOverlay
         countdown={state.countdown}
         visible={state.phase === 'memorize'}

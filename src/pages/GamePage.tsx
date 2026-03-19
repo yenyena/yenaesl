@@ -7,6 +7,7 @@ import { SlowReveal } from '../games/slow-reveal';
 import { OddOneOut } from '../games/odd-one-out';
 import { FreezeAndFind } from '../games/freeze-and-find';
 import { BuildTheMonster } from '../games/build-the-monster';
+import { TreasureTrail } from '../games/treasure-trail';
 
 const GAME_COMPONENTS: Record<string, ComponentType> = {
   'memory-match': MemoryMatch,
@@ -15,6 +16,7 @@ const GAME_COMPONENTS: Record<string, ComponentType> = {
   'odd-one-out': OddOneOut,
   'freeze-and-find': FreezeAndFind,
   'build-the-monster': BuildTheMonster,
+  'treasure-trail': TreasureTrail,
 };
 
 export function GamePage() {

@@ -7,6 +7,7 @@ export const initialState: MemoryMatchState = {
   cards: [],
   flippedIndices: [],
   matchedPairs: 0,
+  totalPairs: 4,
   attempts: 0,
   countdown: COUNTDOWN_START,
 };
@@ -21,6 +22,7 @@ export function memoryMatchReducer(
         ...initialState,
         phase: 'memorize',
         cards: action.cards.map((c) => ({ ...c, isFlipped: true })),
+        totalPairs: action.totalPairs,
         countdown: COUNTDOWN_START,
       };
 
